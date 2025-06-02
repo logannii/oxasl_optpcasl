@@ -259,7 +259,7 @@ class ScanVisualisation(wx.Panel):
             return
 
         width, height = self.GetClientSize()
-        row_height = min(20, 0.8*self.vfactor*height / (len(self._summary) + 4))
+        row_height = int(min(20, 0.8*self.vfactor*height / (len(self._summary) + 4)))
         row_width = self.hfactor*width
 
         ox = width*(1-self.hfactor)/2
@@ -280,7 +280,7 @@ class ScanVisualisation(wx.Panel):
             x = ox
             # Label/control timings
             for ld, tc in zip(lds, tcs):
-                rect = wx.Rect(x, y, int(ld * scale)-1, row_height-1)
+                rect = wx.Rect(int(x), int(y), int(ld * scale)-1, row_height-1)
                 col = wx.Colour(128, 128, 255)
                 if tc == 1:
                     dc.SetBrush(wx.Brush(wx.TheColourDatabase.Find("BLUE"), wx.SOLID))
@@ -292,7 +292,7 @@ class ScanVisualisation(wx.Panel):
             x += pld*scale
 
             # Readout
-            rect = wx.Rect(x, y, readout*scale, row_height-1)
+            rect = wx.Rect(int(x), int(y), int(readout*scale), row_height-1)
             dc.SetBrush(wx.Brush(wx.TheColourDatabase.Find("RED"), wx.SOLID))
             dc.DrawRectangle(*rect.Get())
 
@@ -300,12 +300,12 @@ class ScanVisualisation(wx.Panel):
 
         # Scale
         y += 5
-        dc.DrawLine(ox, y, ox+row_width, y)
+        dc.DrawLine(int(ox), int(y), int(ox+row_width), int(y))
         y += 10
         t = 0.0
         while t < total_time + 0.1:
             x = ox + t * scale
-            dc.DrawLine(x, y-5, x, y-10)
+            dc.DrawLine(int(x), int(y-5), int(x), int(y-10))
             self._centered_text(dc, "%.1f" % t, x, y)
             t += 0.5
         y += row_height - 15
@@ -314,22 +314,22 @@ class ScanVisualisation(wx.Panel):
         key_width = row_width / 5
         x = ox + key_width
         y += row_height
-        rect = wx.Rect(x, y, 40, row_height-1)
+        rect = wx.Rect(int(x), int(y), 40, row_height-1)
         dc.SetBrush(wx.Brush(wx.TheColourDatabase.Find("BLUE"), wx.SOLID))
         dc.DrawRectangle(*rect.Get())
-        dc.DrawText("Label", x + 45, y)
+        dc.DrawText("Label", int(x + 45), int(y))
         
         x += key_width
-        rect = wx.Rect(x, y, 40, row_height-1)
+        rect = wx.Rect(int(x), int(y), 40, row_height-1)
         dc.SetBrush(wx.Brush(wx.TheColourDatabase.Find("GREY"), wx.SOLID))
         dc.DrawRectangle(*rect.Get())
-        dc.DrawText("Control", x + 45, y)
+        dc.DrawText("Control", int(x + 45), int(y))
 
         x += key_width
-        rect = wx.Rect(x, y, 40, row_height-1)
+        rect = wx.Rect(int(x), int(y), 40, row_height-1)
         dc.SetBrush(wx.Brush(wx.TheColourDatabase.Find("RED"), wx.SOLID))
         dc.DrawRectangle(*rect.Get())
-        dc.DrawText("Readout", x + 45, y)
+        dc.DrawText("Readout", int(x + 45), int(y))
         y += row_height
 
         # For screenshot it is useful to know the maximum x and y extents of the drawing
@@ -338,7 +338,7 @@ class ScanVisualisation(wx.Panel):
         
     def _centered_text(self, dc, text, x, y):
         text_size = dc.GetTextExtent(text)
-        dc.DrawText(text, x-text_size.x/2, y-text_size.y/2)
+        dc.DrawText(text, int(x-text_size.x/2), int(y-text_size.y/2))
 
 class ReportWxScreenshot(object):
     """
