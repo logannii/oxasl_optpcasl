@@ -3,31 +3,32 @@ OXASL_OPTPCASL: Widget to control the parameters of the PCASL scan to optimize
 
 Copyright (c) 2019 University of Nottingham
 """
+
 import os
 
 import wx
 import wx.grid
 
-from .widgets import TabPage, NumberChooser
-
-from ..structures import ScanParams, PhysParams, ATTDist, Limits
 from ..kinetic_model import BuxtonPcasl
 from ..scan import *
+from ..structures import ATTDist, Limits, PhysParams, ScanParams
+from .widgets import NumberChooser, TabPage
 
 PROTOCOLS = [
     {
-        "name" : "Sequential",
-        "desc" : "Standard label/control pCASL acquisition (single or multi PLD)"
+        "name": "Sequential",
+        "desc": "Standard label/control pCASL acquisition (single or multi PLD)",
     },
     {
-        "name" : "Hadamard",
-        "desc" : "Time-encoded pCASL acquisition using a Hadamard encoding pattern"
+        "name": "Hadamard",
+        "desc": "Time-encoded pCASL acquisition using a Hadamard encoding pattern",
     },
     {
-        "name" : "Free lunch",
-        "desc" : "Acquisition using a fixed long labelling bolus with the long PLD filled with Hadamard encoded sub-boli"
+        "name": "Free lunch",
+        "desc": "Acquisition using a fixed long labelling bolus with the long PLD filled with Hadamard encoded sub-boli",
     },
 ]
+
 
 class ScanOptions(TabPage):
     """
@@ -39,28 +40,88 @@ class ScanOptions(TabPage):
         self._errors = {}
 
         self.section("Scan parameters")
-        self._protocol = self.choice("Scan protocol", choices=[p["name"] for p in PROTOCOLS], handler=self._protocol_changed)
-        self._noise = self.number("Additive noise std.dev. relative to M0", digits=4, minval=0, maxval=0.1, initial=0.0013)
-        self._duration = self.number("Maximum scan duration (s)", minval=0, maxval=1000, initial=300)
-        self._readout_time = self.number("Readout time (s)", minval=0, maxval=2.0, initial=0.638, digits=3)
-        self._readout = self.choice("Readout", choices=["3D (eg GRASE)", "2D multi-slice (eg EPI)"], handler=self._readout_changed)
+        self._protocol = self.choice(
+            "Scan protocol",
+            choices=[p["name"] for p in PROTOCOLS],
+            handler=self._protocol_changed,
+        )
+        self._noise = self.number(
+            "Additive noise std.dev. relative to M0",
+            digits=4,
+            minval=0,
+            maxval=0.1,
+            initial=0.0013,
+        )
+        self._duration = self.number(
+            "Maximum scan duration (s)", minval=0, maxval=1000, initial=300
+        )
+        self._readout_time = self.number(
+            "Readout time (s)", minval=0, maxval=2.0, initial=0.638, digits=3
+        )
+        self._readout = self.choice(
+            "Readout",
+            choices=["3D (eg GRASE)", "2D multi-slice (eg EPI)"],
+            handler=self._readout_changed,
+        )
 
-        self._nslices = self.integer("Number of slices", minval=1, maxval=100, initial=10)
-        self._slicedt = self.number("Time per slice (ms)", minval=0, maxval=50, step=1, initial=10)
+        self._nslices = self.integer(
+            "Number of slices", minval=1, maxval=100, initial=10
+        )
+        self._slicedt = self.number(
+            "Time per slice (ms)", minval=0, maxval=50, step=1, initial=10
+        )
 
-        self._nplds = self.integer("Number of PLDs", minval=1, maxval=20, initial=1, handler=self._nplds_changed)
-        self._plds = self.number_list("Initial PLDs (s)", digits=3, minval=0.1, maxval=3.0, initial=[2.0], handler=self._plds_changed)
+        self._nplds = self.integer(
+            "Number of PLDs",
+            minval=1,
+            maxval=20,
+            initial=1,
+            handler=self._nplds_changed,
+        )
+        self._plds = self.number_list(
+            "Initial PLDs (s)",
+            digits=3,
+            minval=0.1,
+            maxval=3.0,
+            initial=[2.0],
+            handler=self._plds_changed,
+        )
 
-        self._ld = self.choice("Label duration", choices=["Fixed", "Single variable", "Multiple variable (one per PLD)"], handler=self._ld_changed)
-        self._lds = self.number_list("Initial label durations (s)", digits=3, minval=0.1, maxval=3.0, initial=[1.8], handler=self._lds_changed)
-        
+        self._ld = self.choice(
+            "Label duration",
+            choices=["Fixed", "Single variable", "Multiple variable (one per PLD)"],
+            handler=self._ld_changed,
+        )
+        self._lds = self.number_list(
+            "Initial label durations (s)",
+            digits=3,
+            minval=0.1,
+            maxval=3.0,
+            initial=[1.8],
+            handler=self._lds_changed,
+        )
+
         self._had_label = self.section("Time encoding")
-        self._had_size = self.choice("Hadamard matrix size", choices=["4", "8", "12"], initial=1)
-        self._had_ld = self.choice("Sub-boli", choices=["All equal", "T1-adjusted", "Unconstrained"], handler=self._had_ld_changed)
-        self._had_lds = self.number_list("Sub-bolus duration (s)", minval=0, maxval=3, initial=[0.5], handler=self._had_lds_changed)
-        
+        self._had_size = self.choice(
+            "Hadamard matrix size", choices=["4", "8", "12"], initial=1
+        )
+        self._had_ld = self.choice(
+            "Sub-boli",
+            choices=["All equal", "T1-adjusted", "Unconstrained"],
+            handler=self._had_ld_changed,
+        )
+        self._had_lds = self.number_list(
+            "Sub-bolus duration (s)",
+            minval=0,
+            maxval=3,
+            initial=[0.5],
+            handler=self._had_lds_changed,
+        )
+
         self._set_btn = self.button("Set protocol", handler=self._set)
-        self._error = self.text(" ", textcol=wx.TheColourDatabase.Find("RED"), bold=True, span=2)
+        self._error = self.text(
+            " ", textcol=wx.TheColourDatabase.Find("RED"), bold=True, span=2
+        )
 
         self.next_prev()
         self.sizer.AddGrowableCol(1)
@@ -82,17 +143,16 @@ class ScanOptions(TabPage):
         nonhad = self._protocol.GetSelection() in (0, 2)
         had_method = "Show" if had else "Hide"
         nonhad_method = "Show" if nonhad else "Hide"
-        
-        for w in (self._had_size, self._had_ld, 
-                  self._had_lds, self._had_label):
+
+        for w in (self._had_size, self._had_ld, self._had_lds, self._had_label):
             getattr(w, had_method)()
             if hasattr(w, "label"):
                 getattr(w.label, had_method)()
-        
+
         for w in (self._lds, self._ld):
             getattr(w, nonhad_method)()
             getattr(w.label, nonhad_method)()
-        
+
         if had and nonhad:
             # Free lunch - only offer fixed label duration
             # and T1-decay Hadamard
@@ -106,7 +166,9 @@ class ScanOptions(TabPage):
             self._ld.Enable()
             self._had_ld.Enable()
 
-        self._init_params(plds=True, lds=nonhad, had_lds=had, freelunch_lds=had and nonhad)
+        self._init_params(
+            plds=True, lds=nonhad, had_lds=had, freelunch_lds=had and nonhad
+        )
         self.sizer.Layout()
 
     def _ld_changed(self, _event=None):
@@ -124,20 +186,20 @@ class ScanOptions(TabPage):
 
     def _lds_changed(self, _event=None):
         self._validate_lds()
-    
+
     def _plds_changed(self, _event=None):
         self._validate_plds()
-    
+
     def _nplds_changed(self, _event=None):
         self._init_params(plds=True, lds=True)
 
     def _init_params(self, plds=False, lds=False, had_lds=False, freelunch_lds=False):
         p = self._scan_class()(
             BuxtonPcasl(PhysParams()),
-            ScanParams(self._duration.GetValue(), self._nplds.GetValue()), 
+            ScanParams(self._duration.GetValue(), self._nplds.GetValue()),
             self.notebook.win.opt.att_dist,
             self.notebook.win.opt.pld_lims,
-            self.notebook.win.opt.ld_lims
+            self.notebook.win.opt.ld_lims,
         )
         params = p.name_params(p.initial_params())
         if plds and "plds" in params:
@@ -166,10 +228,10 @@ class ScanOptions(TabPage):
 
     def _had_lds_changed(self, _event=None):
         self._validate_had_lds()
-             
+
     def _validate_lds(self):
         self._errors.pop("LD", None)
-        
+
         if not self._lds.IsShown():
             return
 
@@ -177,7 +239,7 @@ class ScanOptions(TabPage):
             expected_nlds = 1
         else:
             expected_nlds = self._nplds.GetValue()
-        
+
         try:
             lds = self._lds.GetValue()
             if len(lds) != expected_nlds:
@@ -188,32 +250,38 @@ class ScanOptions(TabPage):
 
     def _validate_plds(self):
         self._errors.pop("PLD", None)
-        
+
         expected_nplds = self._nplds.GetValue()
         try:
             plds = self._plds.GetValue()
             if len(plds) != expected_nplds:
-                self._errors["PLD"] = "Wrong number of PLDs - expected %i" % expected_nplds
+                self._errors["PLD"] = (
+                    "Wrong number of PLDs - expected %i" % expected_nplds
+                )
         except ValueError:
             self._errors["PLD"] = "PLDs must be space or comma separated numbers"
         self._update_errors()
 
     def _validate_had_lds(self):
         self._errors.pop("HADLD", None)
-        
+
         if self._had_ld.GetSelection() in (0, 1):
             expected_nlds = 1
         else:
-            expected_nlds = self.had_size-1
-        
+            expected_nlds = self.had_size - 1
+
         try:
             lds = self._had_lds.GetValue()
             if len(lds) != expected_nlds:
-                self._errors["HADLD"] = "Wrong number of sub-bolus durations - expected %i" % expected_nlds
+                self._errors["HADLD"] = (
+                    "Wrong number of sub-bolus durations - expected %i" % expected_nlds
+                )
         except ValueError:
-            self._errors["HADLD"] = "Sub-bolus durations must be space or comma separated numbers"
+            self._errors["HADLD"] = (
+                "Sub-bolus durations must be space or comma separated numbers"
+            )
         self._update_errors()
-        
+
     def _update_errors(self):
         errors = "\n".join(["ERROR: %s" % v for v in self._errors.values()])
         self._error.SetLabel(errors)
@@ -292,4 +360,6 @@ class ScanOptions(TabPage):
             raise ValueError("Protocol type: %i" % protocol_type)
 
     def get(self, kinetic_model, opt):
-        return self._scan_class()(kinetic_model, self.scan_params,  opt.att_dist,  opt.pld_lims,  opt.ld_lims)
+        return self._scan_class()(
+            kinetic_model, self.scan_params, opt.att_dist, opt.pld_lims, opt.ld_lims
+        )

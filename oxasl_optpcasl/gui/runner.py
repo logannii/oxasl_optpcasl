@@ -11,13 +11,16 @@ from wx.lib.pubsub import pub
 
 from ..optimize import Optimizer
 
+
 class OptimizationRunner(wx.Frame):
     """
     Runs oxford_asl (and any other required commands) based on configured options
     """
 
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent, title="Run", size=(600, 400), style=wx.DEFAULT_FRAME_STYLE)
+        wx.Frame.__init__(
+            self, parent, title="Run", size=(600, 400), style=wx.DEFAULT_FRAME_STYLE
+        )
         self._optimizer_thread = None
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -62,10 +65,12 @@ class OptimizationRunner(wx.Frame):
         self._optimizer_thread = OptimizationThread(protocol, cost_model, **kwargs)
         self._optimizer_thread.start()
 
+
 class OptimizationThread(Thread):
     """
     Run the optimization in the background
     """
+
     def __init__(self, protocol, cost_model, **kwargs):
         """
         :param cmds: Sequence of ``Cmd`` instances

@@ -2,26 +2,31 @@
 """
 Setup script for oxasl_optpcasl
 """
-import os
-import subprocess
-import re
 import io
+import os
+import re
+import subprocess
 
-from setuptools import setup
-from setuptools import find_packages
+from setuptools import find_packages, setup
 
-MODULE = 'oxasl_optpcasl'
+MODULE = "oxasl_optpcasl"
+
 
 def get_filetext(rootdir, filename):
-    """ Get the text of a local file """
-    with io.open(os.path.join(rootdir, filename), encoding='utf-8') as f:
+    """Get the text of a local file"""
+    with io.open(os.path.join(rootdir, filename), encoding="utf-8") as f:
         return f.read()
 
+
 def git_version():
-    """ Get the full and python standardized version from Git tags (if possible) """
+    """Get the full and python standardized version from Git tags (if possible)"""
     try:
         # Full version includes the Git commit hash
-        full_version = subprocess.check_output('git describe --dirty', shell=True).decode("utf-8").strip(" \n")
+        full_version = (
+            subprocess.check_output("git describe --dirty", shell=True)
+            .decode("utf-8")
+            .strip(" \n")
+        )
 
         # Python standardized version in form major.minor.patch.post<build>
         version_regex = re.compile(r"v?(\d+\.\d+\.\d+(-\d+)?).*")
@@ -35,27 +40,37 @@ def git_version():
         # Any failure, return None. We may not be in a Git repo at all
         return None, None
 
+
 def git_timestamp():
-    """ Get the last commit timestamp from Git (if possible)"""
+    """Get the last commit timestamp from Git (if possible)"""
     try:
-        return subprocess.check_output('git log -1 --format=%cd', shell=True).decode("utf-8").strip(" \n")
+        return (
+            subprocess.check_output("git log -1 --format=%cd", shell=True)
+            .decode("utf-8")
+            .strip(" \n")
+        )
     except:
         # Any failure, return None. We may not be in a Git repo at all
         return None
 
+
 def update_metadata(rootdir, version_str, timestamp_str):
-    """ Update the version and timestamp metadata in the module _version.py file """
-    with io.open(os.path.join(rootdir, MODULE, "_version.py"), "w", encoding='utf-8') as f:
+    """Update the version and timestamp metadata in the module _version.py file"""
+    with io.open(
+        os.path.join(rootdir, MODULE, "_version.py"), "w", encoding="utf-8"
+    ) as f:
         f.write("__version__ = '%s'\n" % version_str)
         f.write("__timestamp__ = '%s'\n" % timestamp_str)
 
+
 def get_requirements(rootdir):
-    """ Get a list of all entries in the requirements file """
-    with io.open(os.path.join(rootdir, 'requirements.txt'), encoding='utf-8') as f:
+    """Get a list of all entries in the requirements file"""
+    with io.open(os.path.join(rootdir, "requirements.txt"), encoding="utf-8") as f:
         return [l.strip() for l in f.readlines()]
 
+
 def get_version(rootdir):
-    """ Get the current version number (and update it in the module _version.py file if necessary)"""
+    """Get the current version number (and update it in the module _version.py file if necessary)"""
     version, timestamp = git_version()[1], git_timestamp()
 
     if version is not None and timestamp is not None:
@@ -63,7 +78,9 @@ def get_version(rootdir):
         update_metadata(rootdir, version, timestamp)
     else:
         # Could not get metadata from Git - use the version file if it exists
-        with io.open(os.path.join(rootdir, MODULE, '_version.py'), encoding='utf-8') as f:
+        with io.open(
+            os.path.join(rootdir, MODULE, "_version.py"), encoding="utf-8"
+        ) as f:
             md = f.read()
             match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", md, re.M)
             if match:
@@ -72,38 +89,37 @@ def get_version(rootdir):
                 version = "unknown"
     return version
 
+
 module_dir = os.path.abspath(os.path.dirname(__file__))
 
 kwargs = {
-    'name' : 'oxasl-optpcasl',
-    'version' : get_version(module_dir),
-    'description' : 'Python library for optimizing multi-PLD pCASL acquisitions',
-    'long_description' : get_filetext(module_dir, 'README.md'),
-    'long_description_content_type' : 'text/markdown',
-    'url' : 'https://oxasl_optpcasl.readthedocs.io/',
-    'author' : 'Joseph Woods, Martin Craig',
-    'author_email' : 'martin.craig@eng.ox.ac.uk',
-    'license' : 'Apache-2.0',
-    'install_requires' : get_requirements(module_dir),
-    'packages' : find_packages(),
-    'package_data' : {
-        'oxasl_optpcasl.gui': ['banner.png', "oxasl.png", "icon.png"]
-    },
-    'entry_points' : {
-        'console_scripts' : [
+    "name": "oxasl-optpcasl",
+    "version": get_version(module_dir),
+    "description": "Python library for optimizing multi-PLD pCASL acquisitions",
+    "long_description": get_filetext(module_dir, "README.md"),
+    "long_description_content_type": "text/markdown",
+    "url": "https://oxasl_optpcasl.readthedocs.io/",
+    "author": "Joseph Woods, Martin Craig",
+    "author_email": "martin.craig@eng.ox.ac.uk",
+    "license": "Apache-2.0",
+    "install_requires": get_requirements(module_dir),
+    "packages": find_packages(),
+    "package_data": {"oxasl_optpcasl.gui": ["banner.png", "oxasl.png", "icon.png"]},
+    "entry_points": {
+        "console_scripts": [
             "oxasl_optpcasl=oxasl_optpcasl.main:main",
         ],
-        'gui_scripts' : [
+        "gui_scripts": [
             "oxasl_optpcasl_gui=oxasl_optpcasl.gui.main_window:main",
         ],
     },
-    'classifiers' : [
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Science/Research',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Topic :: Scientific/Engineering :: Bio-Informatics',
-        'License :: OSI Approved :: Apache Software License',
+    "classifiers": [
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Science/Research",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Topic :: Scientific/Engineering :: Bio-Informatics",
+        "License :: OSI Approved :: Apache Software License",
     ],
 }
 

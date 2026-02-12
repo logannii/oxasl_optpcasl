@@ -3,22 +3,25 @@ OXASL_OPTPCASL: Widget that displays summary of the scan protocol
 
 Copyright (c) 2019 University of Nottingham
 """
-import sys
-import numpy as np
 
-import wx
+import sys
 
 import matplotlib
-matplotlib.use('WXAgg')
+import numpy as np
+import wx
+
+matplotlib.use("WXAgg")
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-from ..cost import CBFCost, ATTCost, DOptimalCost
+from ..cost import ATTCost, CBFCost, DOptimalCost
+
 
 class ScanSummary(wx.Panel):
     """
     Displays plots illustrating the optimized protocol
     """
+
     def __init__(self, parent):
         self._scan = None
         self._params = None
@@ -39,8 +42,12 @@ class ScanSummary(wx.Panel):
         plds_panel.SetSizer(plds_sizer)
         sizer.Add(plds_panel, 0, wx.EXPAND)
 
-        monospace_font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.NORMAL, wx.NORMAL, False)
-        bold_font = wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False)
+        monospace_font = wx.Font(
+            10, wx.FONTFAMILY_TELETYPE, wx.NORMAL, wx.NORMAL, False
+        )
+        bold_font = wx.Font(
+            10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False
+        )
         label = wx.StaticText(plds_panel, label="PLDs (s)")
         plds_sizer.Add(label, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
         self._plds_text = wx.TextCtrl(plds_panel, style=wx.TE_READONLY)
@@ -80,7 +87,7 @@ class ScanSummary(wx.Panel):
         self._scantime_text = wx.TextCtrl(t_panel, style=wx.TE_READONLY)
         self._scantime_text.SetFont(monospace_font)
         t_sizer.Add(self._scantime_text, 1, wx.ALL, 5)
-        
+
         cost_panel = wx.Panel(self)
         cost_sizer = wx.BoxSizer(wx.HORIZONTAL)
         cost_panel.SetSizer(cost_sizer)
@@ -112,7 +119,7 @@ class ScanSummary(wx.Panel):
         self._cost_comb = wx.TextCtrl(cost_panel, style=wx.TE_READONLY)
         self._cost_comb.SetFont(monospace_font)
         cost_sizer.Add(self._cost_comb, 2, wx.ALL, 5)
-        
+
         report_panel = wx.Panel(self)
         report_sizer = wx.BoxSizer(wx.HORIZONTAL)
         report_panel.SetSizer(report_sizer)
@@ -137,7 +144,7 @@ class ScanSummary(wx.Panel):
         self._cost_cbf.Clear()
         self._cost_att.Clear()
         self._cost_comb.Clear()
-    
+
         self._cbf_opt_label.SetLabel("")
         self._att_opt_label.SetLabel("")
         self._comb_opt_label.SetLabel("")
@@ -151,15 +158,23 @@ class ScanSummary(wx.Panel):
         if self._params is not None:
             paramdict = self._scan.name_params(self._params)
             rpts, tr = self._scan.repeats_total_tr(params)
-            self._plds_text.AppendText(" ".join(["%.3f" % pld for pld in paramdict.get("plds", [])]))
+            self._plds_text.AppendText(
+                " ".join(["%.3f" % pld for pld in paramdict.get("plds", [])])
+            )
             lds = self._scan.all_lds(paramdict.get("lds", self._scan.scan_params.ld))
             self._lds_text.AppendText(" ".join(["%.3f" % ld for ld in lds]))
             self._tr_text.AppendText("%.3f" % tr)
             self._rpts_text.AppendText(str(int(rpts)))
             self._scantime_text.AppendText("%.1f" % (tr * rpts))
-            self._cost_cbf.AppendText("%.3f" % self._scan.cost(self._params, self._cost_model_cbf))
-            self._cost_att.AppendText("%.3f" % self._scan.cost(self._params, self._cost_model_att))
-            self._cost_comb.AppendText("%.3f" % self._scan.cost(self._params, self._cost_model_comb))
+            self._cost_cbf.AppendText(
+                "%.3f" % self._scan.cost(self._params, self._cost_model_cbf)
+            )
+            self._cost_att.AppendText(
+                "%.3f" % self._scan.cost(self._params, self._cost_model_att)
+            )
+            self._cost_comb.AppendText(
+                "%.3f" % self._scan.cost(self._params, self._cost_model_comb)
+            )
 
             desc = self._scan.protocol_summary(params)
             self._vis._summary = desc
@@ -167,7 +182,9 @@ class ScanSummary(wx.Panel):
         self.Layout()
 
     def _generate_report(self, _evt):
-        with wx.FileDialog(self, "Save protocol report", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as dialog:
+        with wx.FileDialog(
+            self, "Save protocol report", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+        ) as dialog:
             if dialog.ShowModal() != wx.ID_CANCEL:
                 report_path = dialog.GetPath()
                 self._notebook.win.generate_report(report_path)
@@ -189,7 +206,10 @@ class ScanSummary(wx.Panel):
         if self._scan.scan_params.slicedt == 0:
             readout = "3D"
         else:
-            readout = "2D (%i slices, %.3f s per slice)" % (self._scan.scan_params.nslices, self._scan.scan_params.slicedt)
+            readout = "2D (%i slices, %.3f s per slice)" % (
+                self._scan.scan_params.nslices,
+                self._scan.scan_params.slicedt,
+            )
 
         tabdata = [
             ("Scan type", scan_name),
@@ -232,6 +252,7 @@ class ScanSummary(wx.Panel):
         ]
         report.table(phys_params_tabdata, align="left")
 
+
 class ScanVisualisation(wx.Panel):
     """
     Visual preview of the scan protocol
@@ -243,7 +264,7 @@ class ScanVisualisation(wx.Panel):
         self.Bind(wx.EVT_SIZE, self._on_size)
         self.Bind(wx.EVT_PAINT, self._on_paint)
         self._summary = None
-        
+
         self.hfactor = 0.95
         self.vfactor = 0.95
 
@@ -259,40 +280,44 @@ class ScanVisualisation(wx.Panel):
             return
 
         width, height = self.GetClientSize()
-        row_height = int(min(20, 0.8*self.vfactor*height / (len(self._summary) + 4)))
-        row_width = self.hfactor*width
+        row_height = int(
+            min(20, 0.8 * self.vfactor * height / (len(self._summary) + 4))
+        )
+        row_width = self.hfactor * width
 
-        ox = width*(1-self.hfactor)/2
-        oy = height*(1-self.vfactor)/2
+        ox = width * (1 - self.hfactor) / 2
+        oy = height * (1 - self.vfactor) / 2
 
         # Calculate time scale of x axis (pixels per second)
         total_time = 0
         for label, lds, tcs, pld, readout in self._summary:
             total_time = max(total_time, sum(lds) + pld + readout)
-        total_time = float(round(total_time*2 + 0.5)) / 2
+        total_time = float(round(total_time * 2 + 0.5)) / 2
         scale = row_width / total_time
 
         y = oy
-        self._centered_text(dc, "Protocol schematic", ox + row_width / 2, oy + row_height / 2)
+        self._centered_text(
+            dc, "Protocol schematic", ox + row_width / 2, oy + row_height / 2
+        )
 
         y += row_height * 2
         for label, lds, tcs, pld, readout in self._summary:
             x = ox
             # Label/control timings
             for ld, tc in zip(lds, tcs):
-                rect = wx.Rect(int(x), int(y), int(ld * scale)-1, row_height-1)
+                rect = wx.Rect(int(x), int(y), int(ld * scale) - 1, row_height - 1)
                 col = wx.Colour(128, 128, 255)
                 if tc == 1:
                     dc.SetBrush(wx.Brush(wx.TheColourDatabase.Find("BLUE"), wx.SOLID))
                 else:
                     dc.SetBrush(wx.Brush(wx.TheColourDatabase.Find("GREY"), wx.SOLID))
                 dc.DrawRectangle(*rect.Get())
-                    
-                x += ld*scale
-            x += pld*scale
+
+                x += ld * scale
+            x += pld * scale
 
             # Readout
-            rect = wx.Rect(int(x), int(y), int(readout*scale), row_height-1)
+            rect = wx.Rect(int(x), int(y), int(readout * scale), row_height - 1)
             dc.SetBrush(wx.Brush(wx.TheColourDatabase.Find("RED"), wx.SOLID))
             dc.DrawRectangle(*rect.Get())
 
@@ -300,12 +325,12 @@ class ScanVisualisation(wx.Panel):
 
         # Scale
         y += 5
-        dc.DrawLine(int(ox), int(y), int(ox+row_width), int(y))
+        dc.DrawLine(int(ox), int(y), int(ox + row_width), int(y))
         y += 10
         t = 0.0
         while t < total_time + 0.1:
             x = ox + t * scale
-            dc.DrawLine(int(x), int(y-5), int(x), int(y-10))
+            dc.DrawLine(int(x), int(y - 5), int(x), int(y - 10))
             self._centered_text(dc, "%.1f" % t, x, y)
             t += 0.5
         y += row_height - 15
@@ -314,19 +339,19 @@ class ScanVisualisation(wx.Panel):
         key_width = row_width / 5
         x = ox + key_width
         y += row_height
-        rect = wx.Rect(int(x), int(y), 40, row_height-1)
+        rect = wx.Rect(int(x), int(y), 40, row_height - 1)
         dc.SetBrush(wx.Brush(wx.TheColourDatabase.Find("BLUE"), wx.SOLID))
         dc.DrawRectangle(*rect.Get())
         dc.DrawText("Label", int(x + 45), int(y))
-        
+
         x += key_width
-        rect = wx.Rect(int(x), int(y), 40, row_height-1)
+        rect = wx.Rect(int(x), int(y), 40, row_height - 1)
         dc.SetBrush(wx.Brush(wx.TheColourDatabase.Find("GREY"), wx.SOLID))
         dc.DrawRectangle(*rect.Get())
         dc.DrawText("Control", int(x + 45), int(y))
 
         x += key_width
-        rect = wx.Rect(int(x), int(y), 40, row_height-1)
+        rect = wx.Rect(int(x), int(y), 40, row_height - 1)
         dc.SetBrush(wx.Brush(wx.TheColourDatabase.Find("RED"), wx.SOLID))
         dc.DrawRectangle(*rect.Get())
         dc.DrawText("Readout", int(x + 45), int(y))
@@ -335,10 +360,11 @@ class ScanVisualisation(wx.Panel):
         # For screenshot it is useful to know the maximum x and y extents of the drawing
         self.contents_height = y
         self.contents_width = row_width
-        
+
     def _centered_text(self, dc, text, x, y):
         text_size = dc.GetTextExtent(text)
-        dc.DrawText(text, int(x-text_size.x/2), int(y-text_size.y/2))
+        dc.DrawText(text, int(x - text_size.x / 2), int(y - text_size.y / 2))
+
 
 class ReportWxScreenshot(object):
     """
@@ -363,11 +389,11 @@ class ReportWxScreenshot(object):
         # http://article.gmane.org/gmane.comp.python.wxpython/67327)
         # FIXME MSC I have not tested this on Linux and note we are not
         # using rect for the screenshot extent any more
-        if sys.platform == 'linux2':
+        if sys.platform == "linux2":
             client_x, client_y = panel.ClientToScreen((0, 0))
             border_width = client_x - rect.x
             title_bar_height = client_y - rect.y
-            width += (border_width * 2)
+            width += border_width * 2
             height += title_bar_height + border_width
 
         # Create a DC for the whole panel area
@@ -384,13 +410,13 @@ class ReportWxScreenshot(object):
         # Blit (in this case copy) the actual screen on the memory DC
         # and thus the Bitmap
         memDC.Blit(
-            0, # Copy to this X coordinate
-            0, # Copy to this Y coordinate
-            width, # Copy this width
-            height, # Copy this height
-            dcScreen, # From where do we copy?
-            rect.x, # What's the X offset in the original DC?
-            rect.y  # What's the Y offset in the original DC?
+            0,  # Copy to this X coordinate
+            0,  # Copy to this Y coordinate
+            width,  # Copy this width
+            height,  # Copy this height
+            dcScreen,  # From where do we copy?
+            rect.x,  # What's the X offset in the original DC?
+            rect.y,  # What's the Y offset in the original DC?
         )
 
         # Select the Bitmap out of the memory DC by selecting a new

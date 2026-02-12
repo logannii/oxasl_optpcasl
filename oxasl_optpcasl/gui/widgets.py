@@ -3,14 +3,17 @@ OXASL_OPTPCASL: Useful wx widgets for building the GUI
 
 Copyright (c) 2019 University of Nottingham
 """
+
 import os
 
 import wx
+
 
 class TabPage(wx.Panel):
     """
     Shared methods used by the various tab pages in the GUI
     """
+
     def __init__(self, parent, title, idx, n, name=None):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
         self.notebook = parent
@@ -29,7 +32,7 @@ class TabPage(wx.Panel):
         """
         Add next/previous buttons
         """
-        if self.idx < self.n-1:
+        if self.idx < self.n - 1:
             self.next_btn = wx.Button(self, label="Next", id=wx.ID_FORWARD)
             self.next_btn.Bind(wx.EVT_BUTTON, self._next)
         else:
@@ -42,23 +45,43 @@ class TabPage(wx.Panel):
             self.prev_btn = wx.StaticText(self, label="")
 
         self.pack(" ")
-        self.sizer.AddGrowableRow(self.row-1, 1)
-        self.sizer.Add(self.prev_btn, pos=(self.row, 0), border=10, flag=wx.ALIGN_CENTRE_VERTICAL | wx.ALIGN_LEFT)
-        self.sizer.Add(wx.StaticText(self, label=""), pos=(self.row, 1), border=10, flag=wx.ALIGN_CENTRE_VERTICAL | wx.ALIGN_LEFT)
-        self.sizer.Add(wx.StaticText(self, label=""), pos=(self.row, 2), border=10, flag=wx.ALIGN_CENTRE_VERTICAL | wx.ALIGN_LEFT)
-        self.sizer.Add(self.next_btn, pos=(self.row, 3), border=10, flag=wx.ALIGN_CENTRE_VERTICAL | wx.ALIGN_RIGHT)
+        self.sizer.AddGrowableRow(self.row - 1, 1)
+        self.sizer.Add(
+            self.prev_btn,
+            pos=(self.row, 0),
+            border=10,
+            flag=wx.ALIGN_CENTRE_VERTICAL | wx.ALIGN_LEFT,
+        )
+        self.sizer.Add(
+            wx.StaticText(self, label=""),
+            pos=(self.row, 1),
+            border=10,
+            flag=wx.ALIGN_CENTRE_VERTICAL | wx.ALIGN_LEFT,
+        )
+        self.sizer.Add(
+            wx.StaticText(self, label=""),
+            pos=(self.row, 2),
+            border=10,
+            flag=wx.ALIGN_CENTRE_VERTICAL | wx.ALIGN_LEFT,
+        )
+        self.sizer.Add(
+            self.next_btn,
+            pos=(self.row, 3),
+            border=10,
+            flag=wx.ALIGN_CENTRE_VERTICAL | wx.ALIGN_RIGHT,
+        )
 
     def _next(self, _):
         """
         Move to the next tab in the notebook
         """
-        self.notebook.SetSelection(self.idx+1)
+        self.notebook.SetSelection(self.idx + 1)
 
     def _prev(self, _):
         """
         Move to the previous tab in the notebook
         """
-        self.notebook.SetSelection(self.idx-1)
+        self.notebook.SetSelection(self.idx - 1)
 
     def pack(self, label, *widgets, **kwargs):
         """
@@ -83,7 +106,13 @@ class TabPage(wx.Panel):
                 span = (1, 2)
             else:
                 span = (1, 1)
-            self.sizer.Add(text, pos=(self.row, col), border=border, flag=wx.ALIGN_CENTRE_VERTICAL | wx.LEFT, span=span)
+            self.sizer.Add(
+                text,
+                pos=(self.row, col),
+                border=border,
+                flag=wx.ALIGN_CENTRE_VERTICAL | wx.LEFT,
+                span=span,
+            )
             col += 1
         else:
             text = None
@@ -95,11 +124,26 @@ class TabPage(wx.Panel):
                 span = (1, w.span)
             w.SetFont(font)
             w.Enable(col == 0 or kwargs.get("enable", True))
-            self.sizer.Add(w, pos=(self.row, col), border=border, flag=wx.ALIGN_CENTRE_VERTICAL | wx.EXPAND | wx.LEFT, span=span)
+            self.sizer.Add(
+                w,
+                pos=(self.row, col),
+                border=border,
+                flag=wx.ALIGN_CENTRE_VERTICAL | wx.EXPAND | wx.LEFT,
+                span=span,
+            )
             col += span[1]
         self.row += 1
 
-    def file_picker(self, label, pick_dir=False, handler=None, optional=False, initial_on=False, pack=True, **kwargs):
+    def file_picker(
+        self,
+        label,
+        pick_dir=False,
+        handler=None,
+        optional=False,
+        initial_on=False,
+        pack=True,
+        **kwargs
+    ):
         """
         Add a file picker to the tab
         """
@@ -123,7 +167,17 @@ class TabPage(wx.Panel):
 
         return picker
 
-    def choice(self, label, choices, initial=0, optional=False, initial_on=False, handler=None, pack=True, **kwargs):
+    def choice(
+        self,
+        label,
+        choices,
+        initial=0,
+        optional=False,
+        initial_on=False,
+        handler=None,
+        pack=True,
+        **kwargs
+    ):
         """
         Add a widget to choose from a fixed set of options
         """
@@ -168,11 +222,21 @@ class TabPage(wx.Panel):
         """
         handler = self._changed_handler(handler)
         num = NumberList(self, changed_handler=handler, **kwargs)
-        #num.span = 2
+        # num.span = 2
         self.pack(label, num, **kwargs)
         return num
 
-    def integer(self, label, handler=None, pack=True, minval=1, maxval=100, optional=False, initial_on=False, **kwargs):
+    def integer(
+        self,
+        label,
+        handler=None,
+        pack=True,
+        minval=1,
+        maxval=100,
+        optional=False,
+        initial_on=False,
+        **kwargs
+    ):
         """
         Add a widget to choose an integer
         """
@@ -199,7 +263,7 @@ class TabPage(wx.Panel):
         """
         handler = self._changed_handler(handler)
         cb = wx.CheckBox(self, label=label)
-        #cb.span = 2
+        # cb.span = 2
         cb.SetValue(initial)
         cb.Bind(wx.EVT_CHECKBOX, handler)
         self.pack("", cb, **kwargs)
@@ -213,13 +277,14 @@ class TabPage(wx.Panel):
 
     def text(self, label, **kwargs):
         self.pack(label, **kwargs)
-        return self.sizer.FindItemAtPosition((self.row-1, 0)).GetWindow()
+        return self.sizer.FindItemAtPosition((self.row - 1, 0)).GetWindow()
 
     def _changed_handler(self, handler):
         def _changed(event):
             if handler:
                 handler(event)
-            #self.notebook.win.changed()
+            # self.notebook.win.changed()
+
         return _changed
 
     def image(self, label, fname):
@@ -233,14 +298,30 @@ class TabPage(wx.Panel):
         except:
             raise OptionError("%s - invalid image file" % label)
 
+
 class NumberChooser(wx.Panel):
     """
     Widget for choosing a floating point number
     """
 
-    def __init__(self, parent, label=None, minval=0, maxval=1, initial=0.5, step=0.1, digits=2, changed_handler=None):
+    def __init__(
+        self,
+        parent,
+        label=None,
+        minval=0,
+        maxval=1,
+        initial=0.5,
+        step=0.1,
+        digits=2,
+        changed_handler=None,
+    ):
         super(NumberChooser, self).__init__(parent)
-        self.minval, self.orig_min, self.maxval, self.orig_max = minval, minval, maxval, maxval
+        self.minval, self.orig_min, self.maxval, self.orig_max = (
+            minval,
+            minval,
+            maxval,
+            maxval,
+        )
         self.handler = changed_handler
 
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -248,13 +329,17 @@ class NumberChooser(wx.Panel):
             self.label = wx.StaticText(self, label=label)
             self.hbox.Add(self.label, proportion=0, flag=wx.ALIGN_CENTRE_VERTICAL)
         # Set a very large maximum as we want to let the user override the default range
-        #self.spin = wx.SpinCtrl(self, min=0, max=100000, initial=initial)
-        #self.spin.Bind(wx.EVT_SPINCTRL, self._spin_changed)
-        self.spin = wx.SpinCtrlDouble(self, min=0, max=100000, inc=step, initial=initial)
+        # self.spin = wx.SpinCtrl(self, min=0, max=100000, initial=initial)
+        # self.spin.Bind(wx.EVT_SPINCTRL, self._spin_changed)
+        self.spin = wx.SpinCtrlDouble(
+            self, min=0, max=100000, inc=step, initial=initial
+        )
         self.spin.SetDigits(digits)
         self.spin.Bind(wx.EVT_SPINCTRLDOUBLE, self._spin_changed)
         self.slider = wx.Slider(self, value=0, minValue=0, maxValue=100)
-        self.slider.SetValue(int(100*(initial-self.minval)/(self.maxval-self.minval)))
+        self.slider.SetValue(
+            int(100 * (initial - self.minval) / (self.maxval - self.minval))
+        )
         self.slider.Bind(wx.EVT_SLIDER, self._slider_changed)
         self.hbox.Add(self.slider, proportion=1, flag=wx.ALIGN_CENTRE_VERTICAL)
         self.hbox.Add(self.spin, proportion=0, flag=wx.ALIGN_CENTRE_VERTICAL)
@@ -271,18 +356,18 @@ class NumberChooser(wx.Panel):
         Set the numeric value displayed
         """
         self.spin.SetValue(val)
-        self.slider.SetValue(100*(val-self.minval)/(self.maxval-self.minval))
+        self.slider.SetValue(100 * (val - self.minval) / (self.maxval - self.minval))
 
     def _slider_changed(self, event):
         v = event.GetInt()
-        val = self.minval + (self.maxval-self.minval)*float(v)/100
+        val = self.minval + (self.maxval - self.minval) * float(v) / 100
         self.spin.SetValue(val)
         if self.handler:
             self.handler(event)
         event.Skip()
 
     def _spin_changed(self, event):
-        """ If user sets the spin outside the current range, update the slider range
+        """If user sets the spin outside the current range, update the slider range
         to match. However if they go back inside the current range, revert to this for
         the slider"""
         val = event.GetValue()
@@ -294,17 +379,27 @@ class NumberChooser(wx.Panel):
             self.maxval = val
         elif val < self.orig_max:
             self.maxval = self.orig_max
-        self.slider.SetValue(100*(val-self.minval)/(self.maxval-self.minval))
+        self.slider.SetValue(100 * (val - self.minval) / (self.maxval - self.minval))
         if self.handler:
             self.handler(event)
         event.Skip()
+
 
 class NumberList(wx.TextCtrl):
     """
     Widget for choosing a list of floating point numbers
     """
 
-    def __init__(self, parent, label=None, minval=0, maxval=1, initial=[0.5], digits=2, changed_handler=None):
+    def __init__(
+        self,
+        parent,
+        label=None,
+        minval=0,
+        maxval=1,
+        initial=[0.5],
+        digits=2,
+        changed_handler=None,
+    ):
         super(NumberList, self).__init__(parent)
         self.minval, self.maxval = minval, maxval
         self.format = "%%.%if" % digits

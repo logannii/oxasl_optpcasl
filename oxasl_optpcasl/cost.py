@@ -3,7 +3,9 @@ OXASL_OPTPCASL - Cost functions for optimizing ASL protocols
 
 Copyright (c) 2019 University of Nottingham
 """
+
 import numpy as np
+
 
 class CostMeasure(object):
 
@@ -16,13 +18,15 @@ class CostMeasure(object):
         """
         raise NotImplementedError()
 
+
 class LOptimalCost(CostMeasure):
     """
     Optimize CBF or ATT
     """
+
     def __init__(self, A):
         self.A = A
-        self.name = 'L-optimal'
+        self.name = "L-optimal"
 
     def cost(self, cov):
         """
@@ -33,28 +37,34 @@ class LOptimalCost(CostMeasure):
         # Force trace function to batch across leading dimensions
         return np.trace(cost, axis1=-1, axis2=-2)
 
+
 class CBFCost(LOptimalCost):
     """
     Optimize CBF
     """
+
     def __init__(self):
-        LOptimalCost.__init__(self, [[1, 0],  [0, 0]])
-        self.name = 'L-optimal (CBF)'
+        LOptimalCost.__init__(self, [[1, 0], [0, 0]])
+        self.name = "L-optimal (CBF)"
+
 
 class ATTCost(LOptimalCost):
     """
     Optimize ATT
     """
+
     def __init__(self):
-        LOptimalCost.__init__(self, [[0, 0],  [0, 1]])
-        self.name = 'L-optimal (ATT)'
+        LOptimalCost.__init__(self, [[0, 0], [0, 1]])
+        self.name = "L-optimal (ATT)"
+
 
 class DOptimalCost(CostMeasure):
     """
     Optimize for both CBF and ATT variance
     """
+
     def __init__(self):
-        self.name = 'D-optimal'
+        self.name = "D-optimal"
 
     def cost(self, cov):
         """
