@@ -9,8 +9,6 @@ import sys
 
 import numpy as np
 
-from ._version import __version__
-
 
 class OptimizationOutput(object):
     """

@@ -44,16 +44,9 @@ class ScanParams(object):
 
     def __str__(self):
         if self.nslices > 1:
-            return (
-                "%is 2D scan with %.3fs label duration, %i slices (time per slice=%.5fs) and readout time %.3fs"
-                % (self.duration, self.ld, self.nslices, self.slicedt, self.readout)
-            )
+            return f"{self.duration}is 2D scan with {str(self.ld)}s label duration, {self.nslices} slices (time per slice={self.slicedt:.5f}s) and readout time {self.readout:.3f}s"
         else:
-            return "%is 3D scan with  %.3fs label duration and readout time %.3fs" % (
-                self.duration,
-                self.ld,
-                self.readout,
-            )
+            return f"{self.duration}is 3D scan with  {str(self.ld)}s label duration and readout time {self.readout:.3f}s"
 
 
 class PhysParams(object):

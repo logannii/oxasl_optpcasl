@@ -11,4 +11,19 @@ __credits__ = ["Joseph Wood, Martin Craig"]
 __maintainer__ = "Martin Craig"
 __email__ = "martin.craig@eng.ox.ac.uk"
 
-from ._version import __version__
+try:
+    from ._version import __version__
+except ImportError:
+    __version__ = "unknown"
+
+from oxasl_optpcasl import cost, kinetic_model, main, optimize, scan, structures
+
+__all__ = [
+    "__version__",
+    "cost",
+    "kinetic_model",
+    "main",
+    "optimize",
+    "scan",
+    "structures",
+]
