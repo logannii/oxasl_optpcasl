@@ -132,14 +132,15 @@ class Optimizer(object):
         self.log.write("DONE")
         return np.array(best_params)
 
-    def optimize(self, initial_params=None, reps=1):
+    def optimize(self, initial_params=None, reps=1, rand_order=False):
         """
         Optimize parameters
 
         :param initial_params: Initial values of parameters
-        :param reps: Number of times to repeat optimization. Each iteration will
-                     vary the parameters in a random order so the outcome may
-                     differ. The final result will be the one with the best cost
+        :param reps: Number of times to repeat optimization.
+        :param rand_order: Whether to vary parameters in a random order. Default is
+                          False to keep the optimizer deterministic and match the
+                          reference results used by the tests.
 
         :return: Mapping from key to output value, e.g. keys include 'best_cost', 'params'
         """
@@ -154,7 +155,7 @@ class Optimizer(object):
         best_output, best_cost = None, 1e99
         for rep in range(reps):
             self.log.write("Optimization %i/%i... " % (rep + 1, reps))
-            output = self._optimize_once(initial_params)
+            output = self._optimize_once(initial_params, rand_order=rand_order)
             self.log.write(
                 "DONE - Optimized parameters: %s (cost: %.5f)\n"
                 % (self._params2str(output["params"]), output["best_cost"])
