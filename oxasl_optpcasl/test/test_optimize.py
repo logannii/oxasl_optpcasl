@@ -9,6 +9,27 @@ import numpy as np
 import oxasl_optpcasl as opt
 
 
+def test_scan_params_fixed_tr():
+    """Test explicit fixed-TR behaviour
+
+    TR is per-image repetition time. With nPLD=5 (2 images per PLD = 10 images total per block):
+    total_tr = 2 * nPLD * tr_per_image = 2 * 5 * 0.8 = 8.0s per block
+    repeats = floor(110 / 8.0) = 13
+    """
+    scan = opt.ScanParams(duration=110, npld=5, readout=7.3, ld=1.8, tr=0.8)
+    protocol = opt.FixedLDPcaslProtocol(
+        opt.BuxtonPcasl(opt.ASLParams(f=50.0 / 6000)),
+        scan,
+        opt.ATTDist(0.5, 3.0, 0.05, 0.2),
+        opt.Limits(0.1, 3.0, 0.1, name="PLD"),
+        opt.Limits(0.1, 1.8, 0.1, name="LD"),
+    )
+    repeats, total_tr = protocol.repeats_total_tr(np.array([0.4, 0.8, 1.2, 1.6, 2.0]))
+    assert repeats == 13
+    assert total_tr == 8.0
+    assert total_tr == 8.0
+
+
 def test_doptimal():
     """Test D-optimal optimization method"""
     params = opt.ASLParams(f=50.0 / 6000)

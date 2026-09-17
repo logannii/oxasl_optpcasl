@@ -273,6 +273,13 @@ class PcaslProtocol(Protocol):
         return np.mean(cost, axis=(-1, -2))
 
     def repeats_total_tr(self, params):
+        if self.scan_params.tr is not None:
+            # TR is the repetition time per image; calculate total_tr for one full repeat
+            # which includes 2 images (label + control) per PLD, so 2 * nPLD * TR
+            tr_per_image = np.asarray(self.scan_params.tr, dtype=np.float64)
+            total_tr = 2 * self.scan_params.npld * tr_per_image
+            return np.floor(self.scan_params.duration / total_tr), np.round(total_tr, 5)
+
         # Allow for label/control image at each time point
         lds, plds = self.timings(params)
         tr = lds + plds + self.scan_params.readout

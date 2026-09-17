@@ -23,12 +23,14 @@ class ScanParams(object):
         noise=0.0013,
         plds=None,
         had_size=8,
+        tr=None,
     ):
         self.duration = duration
         self.npld = npld
         self.nslices = nslices
         self.slicedt = slicedt
         self.readout = readout
+        self.tr = float(tr) if tr is not None else None
         if isinstance(ld, (float, int)):
             self.ld = [float(ld)]
         else:
@@ -43,10 +45,11 @@ class ScanParams(object):
             )
 
     def __str__(self):
+        tr_text = "" if self.tr is None else f", fixed TR={self.tr:.3f}s"
         if self.nslices > 1:
-            return f"{self.duration}is 2D scan with {str(self.ld)}s label duration, {self.nslices} slices (time per slice={self.slicedt:.5f}s) and readout time {self.readout:.3f}s"
+            return f"{self.duration}is 2D scan with {str(self.ld)}s label duration, {self.nslices} slices (time per slice={self.slicedt:.5f}s), readout time {self.readout:.3f}s{tr_text}"
         else:
-            return f"{self.duration}is 3D scan with  {str(self.ld)}s label duration and readout time {self.readout:.3f}s"
+            return f"{self.duration}is 3D scan with  {str(self.ld)}s label duration, readout time {self.readout:.3f}s{tr_text}"
 
 
 class PhysParams(object):

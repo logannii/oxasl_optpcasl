@@ -92,6 +92,12 @@ class OptPcaslArgumentParser(argparse.ArgumentParser):
             default=0.5,
         )
         group.add_argument(
+            "--scan-tr",
+            help="Fixed TR for the protocol in seconds. If set, it overrides the implicit TR derived from LD + PLD + readout.",
+            type=float,
+            default=None,
+        )
+        group.add_argument(
             "--scan-lds",
             "--scan-ld",
             "--scan-tau",
@@ -218,6 +224,7 @@ def main():
             nslices=options.scan_nslices,
             slicedt=options.scan_slicedt,
             had_size=options.scan_had_size,
+            tr=options.scan_tr,
         )
 
         # PLD limits and step size to search over
@@ -255,9 +262,19 @@ def main():
         for item in scantype.name_params(initial).items():
             print(" - %s: %s" % item)
 
+        # Check if the parameters allow at least one repeat
+        rpts, total_tr = scantype.repeats_total_tr(initial)
+        if rpts == 0:
+            raise ValueError(
+                "Impossible to fit protocol within scan duration: "
+                "scan duration (%.1fs) < total TR needed (%.2fs). "
+                "Please increase scan duration, reduce number of PLDs, reduce TR, or reduce LD. "
+                "With current settings, minimum scan duration needed is %.1fs for 1 repeat."
+                % (options.scan_duration, total_tr, total_tr)
+            )
+
         if options.cost:
             cost = scantype.cost(initial, cost_model)
-            rpts, total_tr = scantype.repeats_total_tr(initial)
             print("\nCost: %g" % cost)
             protocol = scantype.protocol_summary(initial)
             print(
@@ -290,3 +307,7 @@ def main():
         sys.stderr.write("ERROR: %s\n" % str(exc))
         if "--debug" in sys.argv:
             traceback.print_exc()
+
+
+if __name__ == "__main__":
+    main()

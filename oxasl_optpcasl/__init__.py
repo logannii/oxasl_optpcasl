@@ -20,7 +20,7 @@ try:
 except ImportError:
     __version__ = "unknown"
 
-from . import cost, kinetic_model, main, optimize, scan, structures
+from . import cost, kinetic_model, optimize, scan, structures
 from .cost import ATTCost, CBFCost, DOptimalCost, LOptimalCost
 from .kinetic_model import BuxtonPcasl
 from .optimize import Optimizer
@@ -135,7 +135,10 @@ class _CompatOptimizer:
                 scan_time=0.0,
             )
             result.cov_optimized = self.protocol.cov(params)
-            if getattr(result.cov_optimized, "ndim", 0) == 5 and result.cov_optimized.shape[0] == 1:
+            if (
+                getattr(result.cov_optimized, "ndim", 0) == 5
+                and result.cov_optimized.shape[0] == 1
+            ):
                 result.cov_optimized = result.cov_optimized[0]
             return result
 
@@ -147,7 +150,10 @@ class _CompatOptimizer:
         result.best_cost = output["best_cost"]
         result.params = output["params"]
         result.cov_optimized = self.protocol.cov(output["params"])
-        if getattr(result.cov_optimized, "ndim", 0) == 5 and result.cov_optimized.shape[0] == 1:
+        if (
+            getattr(result.cov_optimized, "ndim", 0) == 5
+            and result.cov_optimized.shape[0] == 1
+        ):
             result.cov_optimized = result.cov_optimized[0]
         return result
 
@@ -178,6 +184,15 @@ class LOptimal(_CompatOptimizer):
 
 LOptimal = LOptimal
 
+
+def __getattr__(name):
+    if name == "main":
+        from . import main as main_module
+
+        return main_module
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 __all__ = [
     "__version__",
     "ASLParams",
@@ -189,7 +204,6 @@ __all__ = [
     "DOptimal",
     "DOptimalCost",
     "FixedLDPcaslProtocol",
-    "LOptimal",
     "LOptimal",
     "LOptimalCost",
     "Limits",
