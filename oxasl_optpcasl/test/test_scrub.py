@@ -209,3 +209,17 @@ def test_sd_increase_by_att():
     assert batched.shape == (2, len(analysis.att_dist.atts))
     assert np.allclose(batched[1], analysis.sd_increase_by_att(counts[1], "ATT"), equal_nan=True)
     assert np.all(np.isfinite(batched[1]))          # the ATT prior keeps inestimable ATTs finite
+
+
+def test_mean_relative_sd_increase():
+    """Equal-weight average of per-point SD increases: zero for full data, sqrt(2)-1 for halving every
+    delay, and below the variance-weighted cost when the loss is concentrated where variance is large"""
+    analysis = ScrubbingAnalysis(LDS, PLDS, [4] * 5, cbf_values=[20, 50, 80])
+    assert np.isclose(analysis.mean_relative_sd_increase(analysis.repeats, "CBF"), 0)
+    for metric in ("CBF", "ATT"):
+        assert np.isclose(analysis.mean_relative_sd_increase([2] * 5, metric), np.sqrt(2) - 1)
+    counts = np.array([[4, 4, 4, 2, 4], [4, 4, 4, 4, 2]])
+    batched = analysis.mean_relative_sd_increase(counts, "ATT")
+    assert np.allclose(batched, [analysis.mean_relative_sd_increase(c, "ATT") for c in counts])
+    by_att = analysis.relative_sd_increase_by_att(counts[0], "CBF")
+    assert np.isclose(np.nanmean(by_att), analysis.mean_relative_sd_increase(counts[0], "CBF"))

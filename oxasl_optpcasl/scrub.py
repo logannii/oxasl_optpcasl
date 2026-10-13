@@ -400,9 +400,22 @@ class ScrubbingAnalysis(object):
 
     def sd_increase(self, counts, metric):
         """
-        Fractional increase in SD-equivalent uncertainty relative to the full data
+        Fractional increase in SD-equivalent uncertainty relative to the full data, e.g. 0.1 means
+        estimates are 10% noisier than with no scrubbing
 
-        e.g. 0.1 means estimates are 10% noisier than with no scrubbing
+        The increase is computed at every (CBF, ATT) point and averaged with equal weight over the
+        ATT distribution and CBF values (see mean_relative_sd_increase), so ATTs or CBF values that
+        are already imprecise with the full data do not dominate
+
+        :return: [NTrials] or scalar
+        """
+        return self.mean_relative_sd_increase(counts, metric)
+
+    def variance_weighted_sd_increase(self, counts, metric):
+        """
+        SD increase from the ratio of the variances averaged over the ATT distribution and CBF values
+        (the repo's protocol-optimisation cost). This weights ATTs and CBF values by their variance,
+        so late ATTs and low CBF dominate; kept for reference
 
         :return: [NTrials] or scalar
         """
@@ -449,6 +462,38 @@ class ScrubbingAnalysis(object):
             [p.att_weights.max(axis=0) > 0 for p in self.protocols], axis=0
         )
         return np.where(relevant, increase, np.nan)
+
+    def relative_sd_increase_by_att(self, counts, metric):
+        """
+        Relative SD increase at each ATT: computed at every (CBF, ATT) point (variance averaged over
+        slices), then averaged over the CBF values, so each CBF value counts equally
+
+        :return: [NTrials, NATTs] or [NATTs] (NaN at ATTs the protocol gives no weight)
+        """
+        power = METRICS[metric][1]
+        increases = []
+        with np.errstate(invalid="ignore", divide="ignore", over="ignore"):
+            for c_scrubbed, c_full, _ in self._point_costs(counts, metric):
+                ratio = c_scrubbed.mean(axis=-2) / c_full.mean(axis=-2)
+                increases.append(np.nan_to_num(ratio, nan=np.inf) ** (1.0 / power) - 1)
+            mean_increase = np.mean(increases, axis=0)
+        relevant = np.any([p.att_weights.max(axis=0) > 0 for p in self.protocols], axis=0)
+        return np.where(relevant, mean_increase, np.nan)
+
+    def mean_relative_sd_increase(self, counts, metric):
+        """
+        Average of the relative SD increase over the ATT distribution and CBF values: each ATT and
+        each CBF value counts equally, however imprecise it already is with the full data.
+        (variance_weighted_sd_increase instead compares averaged variances, which weights the ATTs
+        and CBF values with the largest variance, e.g. late ATTs and low CBF)
+
+        :return: [NTrials] or scalar
+        """
+        by_att = self.relative_sd_increase_by_att(counts, metric)
+        weights = np.mean([p.att_weights.mean(axis=0) for p in self.protocols], axis=0)
+        with np.errstate(invalid="ignore", over="ignore"):
+            weighted = np.where(weights > 0, np.nan_to_num(by_att, nan=0.0) * weights, 0.0)
+            return weighted.sum(axis=-1) / weights.sum()
 
     def prior_atts(self, counts):
         """
@@ -500,7 +545,8 @@ class ScrubbingAnalysis(object):
 
     def sd_increase_in_range(self, counts, metric, att_range=None):
         """
-        SD increase averaged over the ATT range, excluding any ATTs that remain inestimable
+        SD increase (equal-weight average, as sd_increase) over the ATT range, excluding any ATTs that
+        remain inestimable
 
         With the ATT prior (default), ATT-inestimable points are costed using the prior, so the
         range is only narrowed where no retained pair has seen any labelled blood at all (CBF is
@@ -518,26 +564,19 @@ class ScrubbingAnalysis(object):
         atts = self.att_dist.atts
         lo, hi = att_range if att_range is not None else (atts[0], atts[-1])
         point_costs = self._point_costs(counts, metric)
-        relevant = np.any(
-            [p.att_weights.max(axis=0) > 0 for p in self.protocols], axis=0
-        )
+        relevant = np.any([p.att_weights.max(axis=0) > 0 for p in self.protocols], axis=0)
         # Use the same ATTs for every CBF value and slice
         use = np.all([np.isfinite(c).all(axis=-2) for c, _, _ in point_costs], axis=0)
         use &= relevant & (atts >= lo - 1e-9) & (atts <= hi + 1e-9)
         if self.att_prior is None:
             use &= ~self._outside_estimable(counts)[:, 0, :]
-        num, den = 0.0, 0.0
-        with np.errstate(invalid="ignore", over="ignore"):
-            for (c_scrubbed, c_full, _), protocol in zip(point_costs, self.protocols):
-                weights = protocol.att_weights * use[:, np.newaxis, :]
-                num = num + np.where(weights > 0, c_scrubbed * weights, 0.0).sum(
-                    axis=(-1, -2)
-                )
-                den = den + np.where(weights > 0, c_full * weights, 0.0).sum(
-                    axis=(-1, -2)
-                )
+        with np.errstate(invalid="ignore", divide="ignore", over="ignore"):
+            # Relative SD increase at every (CBF, ATT) point, averaged over CBF, then over the ATTs used
+            by_att = np.mean([np.where(use, (c_s.mean(axis=-2) / c_f.mean(axis=-2)) ** (1.0 / power) - 1, 0.0)
+                              for c_s, c_f, _ in point_costs], axis=0)
+            weights = np.mean([p.att_weights.mean(axis=0) for p in self.protocols], axis=0) * use
             any_used = use.any(axis=1)
-            increase = np.where(any_used, (num / den) ** (1.0 / power) - 1, np.nan)
+            increase = np.where(any_used, (by_att * weights).sum(axis=1) / weights.sum(axis=1), np.nan)
         lo_used = np.where(any_used, atts[np.argmax(use, axis=1)], np.nan)
         hi_used = np.where(
             any_used, atts[len(atts) - 1 - np.argmax(use[:, ::-1], axis=1)], np.nan
